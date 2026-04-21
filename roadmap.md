@@ -809,7 +809,7 @@ ffmpeg -f avfoundation -framerate 30 -video_size 1280x720 -i "0" \
 
 
 server:
-to test image capture :
+to test image capture :P
     ffmpeg -f v4l2 -i /dev/video0 -frames 1 test.jpg
 
 

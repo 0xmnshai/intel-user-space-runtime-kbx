@@ -40,7 +40,7 @@ typedef struct KBX_CACHE_ALIGNED {
   void **data;
 } kbx_task_queue;
 
-typedef struct {
+typedef struct kbx_mem_manager {
   kbx_mem_pool *cpu_pool;
   kbx_mem_pool *gpu_pool;
   kbx_mem_pool *shared_pool;
@@ -63,12 +63,12 @@ typedef struct KBX_CACHE_ALIGNED {
 
 extern "C" {
 kbx_status_t kbx_mem_pool_init(kbx_mem_manager *mem_manager, size_t size);
-void kbx_mem_destroy(kbx_mem_manager *mem_manager);
+void kbx_mem_pool_destroy(kbx_mem_manager *mem_manager);
 
 kbx_status_t kbx_ring_init(kbx_task_queue *ring, size_t size);
 void kbx_ring_destroy(kbx_task_queue *ring);
-bool kbx_ring_push(kbx_task_queue *ring, const kbx_task_params *task);
-bool kbx_ring_pop(kbx_task_queue *ring, kbx_task_params *task);
+bool kbx_ring_push(kbx_task_queue *ring, const kbx_task_params *task, void *data);
+bool kbx_ring_pop(kbx_task_queue *ring, kbx_task_params *task, void **data);
 bool kbx_ring_is_full(const kbx_task_queue *ring);
 bool kbx_ring_is_empty(const kbx_task_queue *ring);
 

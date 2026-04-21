@@ -62,7 +62,9 @@ typedef enum {
   KBX_STATUS_ERR_GPU = -3,
   KBX_STATUS_ERR_DRM = -4,
   KBX_STATUS_ERR_BPF = -5,
-  KBX_STATUS_ERR_VK = -6
+  KBX_STATUS_ERR_VK = -6,
+
+  KBX_STATUS_ERR_GFX = -7
 } kbx_status_t;
 
 typedef struct {

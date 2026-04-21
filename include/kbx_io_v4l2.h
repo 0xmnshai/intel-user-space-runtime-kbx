@@ -62,5 +62,6 @@ kbx_status_t kbx_v4l2_stop_capture(kbx_v4l2_device *device,
 kbx_status_t kbx_v4l2_read(kbx_v4l2_device *device, kbx_image *image);
 kbx_status_t kbx_v4l2_write(kbx_v4l2_device *device, const kbx_image *image);
 
-kbx_status_t kbx_v4l2_get_dmabuf(kbx_v4l2_device *device, int *fd);
+kbx_status_t kbx_v4l2_export_dmabuf(kbx_v4l2_device *device, uint32_t index,
+                                    int *fd);
 }

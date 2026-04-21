@@ -41,6 +41,38 @@ static void save_frame(const char *path, const void *p, int size) {
   }
 }
 
+static void save_frame_as_jpeg(const char *path, const void *p, int size,
+                               uint32_t width, uint32_t height,
+                               uint32_t format) {
+  if (format == V4L2_PIX_FMT_MJPEG) {
+    save_frame(path, p, size);
+    return;
+  }
+
+  const char *ff_fmt = "yuv420p";
+  if (format == V4L2_PIX_FMT_UYVY)
+    ff_fmt = "uyvy422";
+  else if (format == V4L2_PIX_FMT_YUYV)
+    ff_fmt = "yuyv422";
+
+  char cmd[512];
+  snprintf(cmd, sizeof(cmd),
+           "ffmpeg -y -f rawvideo -pixel_format %s -video_size %dx%d -i - "
+           "-frames:v 1 %s > /dev/null 2>&1",
+           ff_fmt, width, height, path);
+
+  FILE *fp = popen(cmd, "w");
+  if (fp) {
+    fwrite(p, 1, size, fp);
+    pclose(fp);
+    printf("Encoded and saved JPEG to %s (software fallback using ffmpeg)\n",
+           path);
+  } else {
+    perror("popen");
+    save_frame(path, p, size);
+  }
+}
+
 kbx_status_t kbx_v4l2_init(kbx_v4l2_device *device,
                            const kbx_v4l2_init_params_t *params) {
   unsigned int n_buffers;
@@ -123,7 +155,7 @@ kbx_status_t kbx_v4l2_init(kbx_v4l2_device *device,
   camera.format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   camera.format.fmt.pix.width = params->width;
   camera.format.fmt.pix.height = params->height;
-  camera.format.fmt.pix.pixelformat = V4L2_PIX_FMT_UYVY;
+  camera.format.fmt.pix.pixelformat = params->format;
   camera.format.fmt.pix.field = V4L2_FIELD_ANY;
   if (-1 == xioctl(camera.fd, VIDIOC_S_FMT, &camera.format)) {
     fprintf(stderr, "VIDIOC_S_FMT error %d, %s\n", errno, strerror(errno));
@@ -138,7 +170,8 @@ kbx_status_t kbx_v4l2_init(kbx_v4l2_device *device,
     return KBX_STATUS_ERR_IO;
   }
 
-  if (camera.format.fmt.pix.pixelformat == V4L2_PIX_FMT_MJPEG) {
+  if (camera.format.fmt.pix.pixelformat == V4L2_PIX_FMT_MJPEG ||
+      (params->format == V4L2_PIX_FMT_MJPEG)) {
     extension = "jpg";
   } else {
     extension = "raw";
@@ -243,7 +276,8 @@ kbx_status_t kbx_v4l2_start_capture(kbx_v4l2_device *device,
     return KBX_STATUS_ERR_IO;
   }
 
-  // If count is 0, we loop indefinitely. If count > 0, we capture 'count' frames.
+  // If count is 0, we loop indefinitely. If count > 0, we capture 'count'
+  // frames.
   for (unsigned int i = 0; (count == 0) || (i < count); i++) {
     for (;;) {
       fd_set fds;
@@ -279,10 +313,22 @@ kbx_status_t kbx_v4l2_start_capture(kbx_v4l2_device *device,
         return KBX_STATUS_ERR_IO;
       }
 
-      printf("Captured frame %d, size: %d bytes\n", i + 1, buffer_info.bytesused);
+      printf("Captured frame %d, size: %d bytes\n", i + 1,
+             buffer_info.bytesused);
 
       sprintf(filename, "frame%d.%s", i + 1, extension);
-      save_frame(filename, buffers[buffer_info.index].start, buffer_info.bytesused);
+      if (strcmp(extension, "jpg") == 0) {
+        struct v4l2_format fmt;
+        CLEAR(fmt);
+        fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        ioctl(device->fd, VIDIOC_G_FMT, &fmt);
+        save_frame_as_jpeg(filename, buffers[buffer_info.index].start,
+                           buffer_info.bytesused, params->width, params->height,
+                           fmt.fmt.pix.pixelformat);
+      } else {
+        save_frame(filename, buffers[buffer_info.index].start,
+                   buffer_info.bytesused);
+      }
 
       /* re-queue buffer */
       if (-1 == xioctl(device->fd, VIDIOC_QBUF, &buffer_info)) {
@@ -296,6 +342,18 @@ kbx_status_t kbx_v4l2_start_capture(kbx_v4l2_device *device,
   return KBX_STATUS_SUCCESS;
 }
 
+kbx_status_t kbx_v4l2_stop_capture(kbx_v4l2_device *device,
+                                   kbx_v4l2_init_params_t *params) {
+  (void)params;
+  enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+  if (-1 == xioctl(device->fd, VIDIOC_STREAMOFF, &type)) {
+    printf("VIDIOC_STREAMOFF error %d, %s\n", errno, strerror(errno));
+    return KBX_STATUS_ERR_IO;
+  }
+
+  return KBX_STATUS_SUCCESS;
+}
 
 void kbx_v4l2_destroy(kbx_v4l2_device *device) {
   if (device->buffers) {
@@ -311,18 +369,61 @@ void kbx_v4l2_destroy(kbx_v4l2_device *device) {
   }
 }
 
-
-kbx_status_t kbx_v4l2_get_dmabuf(kbx_v4l2_device *device, int *fd) {
+kbx_status_t kbx_v4l2_export_dmabuf(kbx_v4l2_device *device, uint32_t index,
+                                    int *fd) {
   struct v4l2_exportbuffer exp_buf;
+  CLEAR(exp_buf);
   exp_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  exp_buf.index = 0;
+  exp_buf.index = index;
   exp_buf.fd = -1;
   exp_buf.flags = O_CLOEXEC | O_RDWR;
 
-  int ret = ioctl(device->fd, VIDIOC_EXPBUF, &exp_buf);
+  int ret = xioctl(device->fd, VIDIOC_EXPBUF, &exp_buf);
   if (ret < 0) {
+    printf("VIDIOC_EXPBUF error %d, %s\n", errno, strerror(errno));
     return KBX_STATUS_ERR_IO;
   }
   *fd = exp_buf.fd;
+  return KBX_STATUS_SUCCESS;
+}
+
+kbx_status_t kbx_v4l2_read(kbx_v4l2_device *device, kbx_image *image) {
+  if (!device || !image) return KBX_STATUS_ERR_IO;
+
+  struct v4l2_buffer buffer_info;
+  CLEAR(buffer_info);
+  buffer_info.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  buffer_info.memory = V4L2_MEMORY_MMAP;
+
+  // Dequeue best available buffer
+  if (-1 == xioctl(device->fd, VIDIOC_DQBUF, &buffer_info)) {
+    if (errno == EAGAIN) return KBX_STATUS_ERR_IO; // Non-blocking retry
+    return KBX_STATUS_ERR_IO;
+  }
+
+  // If user provided a buffer, copy the frame data natively
+  if (image->data) {
+    size_t copy_size = (image->data_size < buffer_info.bytesused) ? image->data_size : buffer_info.bytesused;
+    memcpy(image->data, device->buffers[buffer_info.index].start, copy_size);
+    image->data_size = copy_size;
+  }
+
+  // Queue buffer back to the device to prevent starvation
+  if (-1 == xioctl(device->fd, VIDIOC_QBUF, &buffer_info)) {
+    return KBX_STATUS_ERR_IO;
+  }
+
+  return KBX_STATUS_SUCCESS;
+}
+
+kbx_status_t kbx_v4l2_write(kbx_v4l2_device *device, const kbx_image *image) {
+  if (!device || !image || !image->data) return KBX_STATUS_ERR_IO;
+  
+  // V4L2 writes (e.g. v4l2loopback or output devices) typically support native posix write
+  int ret = write(device->fd, image->data, image->data_size);
+  if (ret < 0) {
+    return KBX_STATUS_ERR_IO;
+  }
+  
   return KBX_STATUS_SUCCESS;
 }
