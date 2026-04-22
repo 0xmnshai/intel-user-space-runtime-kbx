@@ -15,18 +15,29 @@ typedef struct {
 
   // image / memory
   cl_mem imported_image;
-  kbx_mem_manager *mem_manager;
+  struct kbx_mem_manager *mem_manager;
 } kbx_cl_ctx;
 
-kbx_status_t kbx_cl_init(kbx_cl_ctx *ctx, kbx_mem_manager *mem_manager);
+kbx_status_t kbx_cl_init(kbx_cl_ctx *ctx, struct kbx_mem_manager *mem_manager);
 
 kbx_status_t kbx_cl_load_kernels(kbx_cl_ctx *ctx, const char *source);
 
+/**
+import_dmabuf
+imports dma buffer for opencl kernel
+
+*/
 kbx_status_t kbx_cl_import_dmabuf(kbx_cl_ctx *ctx, int dmabuf_fd, size_t size,
                                   cl_mem *out_buf);
 
-kbx_status_t kbx_cl_convert_nv12_to_rgb(kbx_cl_ctx *ctx, cl_mem nv12_image,
-                                        cl_mem rgb_image, uint32_t width,
+/**
+convert_nv12_to_rgb
+converts nv12 image to rgb image
+
+*/
+
+kbx_status_t kbx_cl_convert_nv12_to_rgb(kbx_cl_ctx *ctx, cl_mem nv12_buf,
+                                        cl_mem rgb_buf, uint32_t width,
                                         uint32_t height);
 
 kbx_status_t kbx_cl_deinit(kbx_cl_ctx *ctx);
