@@ -1,0 +1,21 @@
+---
+Checks:          'clang-diagnostic-*,clang-analyzer-*,bugprone-*,performance-*,modernize-*,readability-*,cppcoreguidelines-*,cert-*,google-readability-casting,misc-*,-modernize-use-trailing-return-type,-cppcoreguidelines-pro-type-vararg,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-bounds-array-to-pointer-decay'
+WarningsAsErrors: '*'
+HeaderFilterRegex: 'include/.*'
+AnalyzeTemporaryDtors: false
+CheckOptions:
+  - key:             bugprone-argument-comment.StrictMode
+    value:           '1'
+  - key:             bugprone-assert-side-effect.AssertMacros
+    value:           'assert,NSAssert,DASSERT'
+  - key:             modernize-loop-convert.MaxCopySize
+    value:           '16'
+  - key:             modernize-loop-convert.MinConfidence
+    value:           'reasonable'
+  - key:             modernize-pass-by-value.IncludeStyle
+    value:           'llvm'
+  - key:             modernize-replace-auto-ptr.IncludeStyle
+    value:           'llvm'
+  - key:             modernize-use-nullptr.NullMacros
+    value:           'NULL'
+...

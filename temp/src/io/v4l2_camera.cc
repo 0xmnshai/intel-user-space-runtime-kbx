@@ -1,5 +1,5 @@
-#include "kbx_io_v4l2.h"
-#include "kbx_types.h"
+#include "ZCVR_io_v4l2.h"
+#include "ZCVR_types.h"
 
 #include <bits/types/struct_timeval.h>
 #include <cerrno>
@@ -73,42 +73,42 @@ static void save_frame_as_jpeg(const char *path, const void *p, int size,
   }
 }
 
-kbx_status_t kbx_v4l2_init(kbx_v4l2_device *device,
-                           const kbx_v4l2_init_params_t *params) {
+ZCVR_status_t ZCVR_v4l2_init(ZCVR_v4l2_device *device,
+                           const ZCVR_v4l2_init_params_t *params) {
   unsigned int n_buffers;
-  kbx_buffer *buffers;
+  ZCVR_buffer *buffers;
 
-  kbx_camera_device camera;
+  ZCVR_camera_device camera;
   v4l2_std_id std_id = V4L2_STD_UNKNOWN;
 
   camera.fd = open(params->device_name, O_RDWR | O_NONBLOCK);
   if (-1 == camera.fd) {
     fprintf(stderr, "Cannot open '%s': %d, %s\n", params->device_name, errno,
             strerror(errno));
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   if (-1 == xioctl(camera.fd, VIDIOC_QUERYCAP, &camera.capability)) {
     if (errno == EINVAL) {
       fprintf(stderr, "%s is no V4L2 device\n", params->device_name);
-      return KBX_STATUS_ERR_IO;
+      return ZCVR_STATUS_ERR_IO;
     } else {
       fprintf(stderr, "VIDIOC_QUERYCAP error %d, %s\n", errno, strerror(errno));
-      return KBX_STATUS_ERR_IO;
+      return ZCVR_STATUS_ERR_IO;
     }
   }
 
   if (!(camera.capability.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
     fprintf(stderr, "%s is no video capture device\n", params->device_name);
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
   if (!(camera.capability.capabilities & V4L2_CAP_STREAMING)) {
     fprintf(stderr, "%s does not support streaming i/o\n", params->device_name);
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   if (!(camera.capability.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   /* get standard (only if it has a tuner/analog support) */
@@ -159,7 +159,7 @@ kbx_status_t kbx_v4l2_init(kbx_v4l2_device *device,
   camera.format.fmt.pix.field = V4L2_FIELD_ANY;
   if (-1 == xioctl(camera.fd, VIDIOC_S_FMT, &camera.format)) {
     fprintf(stderr, "VIDIOC_S_FMT error %d, %s\n", errno, strerror(errno));
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   /* get and display format */
@@ -167,7 +167,7 @@ kbx_status_t kbx_v4l2_init(kbx_v4l2_device *device,
   camera.format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   if (-1 == xioctl(camera.fd, VIDIOC_G_FMT, &camera.format)) {
     fprintf(stderr, "VIDIOC_G_FMT error %d, %s\n", errno, strerror(errno));
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   if (camera.format.fmt.pix.pixelformat == V4L2_PIX_FMT_MJPEG ||
@@ -198,10 +198,10 @@ kbx_status_t kbx_v4l2_init(kbx_v4l2_device *device,
     if (EINVAL == errno) {
       fprintf(stderr, "%s does not support memory mapping\n",
               params->device_name);
-      return KBX_STATUS_ERR_IO;
+      return ZCVR_STATUS_ERR_IO;
     } else {
       fprintf(stderr, "VIDIOC_REQBUFS error %d, %s\n", errno, strerror(errno));
-      return KBX_STATUS_ERR_IO;
+      return ZCVR_STATUS_ERR_IO;
     }
   }
   if (camera.requestbuffers.count < 2) {
@@ -210,10 +210,10 @@ kbx_status_t kbx_v4l2_init(kbx_v4l2_device *device,
   }
 
   /* allocate buffers */
-  buffers = (kbx_buffer *)calloc(camera.requestbuffers.count, sizeof(*buffers));
+  buffers = (ZCVR_buffer *)calloc(camera.requestbuffers.count, sizeof(*buffers));
   if (!buffers) {
     fprintf(stderr, "Out of memory\n");
-    return KBX_STATUS_ERR_NOMEM;
+    return ZCVR_STATUS_ERR_NOMEM;
   }
 
   /* mmap buffers */
@@ -237,7 +237,7 @@ kbx_status_t kbx_v4l2_init(kbx_v4l2_device *device,
 
     if (MAP_FAILED == buffers[n_buffers].start) {
       printf("mmap error %d, %s\n", errno, strerror(errno));
-      return KBX_STATUS_ERR_IO;
+      return ZCVR_STATUS_ERR_IO;
     } else
       printf("mmap success\n");
   }
@@ -253,7 +253,7 @@ kbx_status_t kbx_v4l2_init(kbx_v4l2_device *device,
 
     if (-1 == xioctl(camera.fd, VIDIOC_QBUF, &buffer_info)) {
       printf("VIDIOC_QBUF error %d, %s\n", errno, strerror(errno));
-      return KBX_STATUS_ERR_IO;
+      return ZCVR_STATUS_ERR_IO;
     } else
       printf("VIDIOC_QBUF success\n");
   }
@@ -261,19 +261,19 @@ kbx_status_t kbx_v4l2_init(kbx_v4l2_device *device,
   device->fd = camera.fd;
   device->buffers = buffers;
   device->n_buffers = n_buffers;
-  return KBX_STATUS_SUCCESS;
+  return ZCVR_STATUS_SUCCESS;
 }
 
-kbx_status_t kbx_v4l2_start_capture(kbx_v4l2_device *device,
-                                    kbx_v4l2_init_params_t *params) {
+ZCVR_status_t ZCVR_v4l2_start_capture(ZCVR_v4l2_device *device,
+                                    ZCVR_v4l2_init_params_t *params) {
   enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  kbx_buffer *buffers = device->buffers;
+  ZCVR_buffer *buffers = device->buffers;
   char filename[32];
   uint32_t count = params->frame_count;
 
   if (-1 == xioctl(device->fd, VIDIOC_STREAMON, &type)) {
     printf("VIDIOC_STREAMON error %d, %s\n", errno, strerror(errno));
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   // If count is 0, we loop indefinitely. If count > 0, we capture 'count'
@@ -294,11 +294,11 @@ kbx_status_t kbx_v4l2_start_capture(kbx_v4l2_device *device,
       if (-1 == r) {
         if (EINTR == errno)
           continue;
-        return KBX_STATUS_ERR_IO;
+        return ZCVR_STATUS_ERR_IO;
       }
       if (0 == r) {
         fprintf(stderr, "Timeout waiting for frame\n");
-        return KBX_STATUS_ERR_IO;
+        return ZCVR_STATUS_ERR_IO;
       }
 
       struct v4l2_buffer buffer_info;
@@ -310,7 +310,7 @@ kbx_status_t kbx_v4l2_start_capture(kbx_v4l2_device *device,
         if (errno == EAGAIN)
           continue;
         printf("VIDIOC_DQBUF error %d, %s\n", errno, strerror(errno));
-        return KBX_STATUS_ERR_IO;
+        return ZCVR_STATUS_ERR_IO;
       }
 
       printf("Captured frame %d, size: %d bytes\n", i + 1,
@@ -333,29 +333,29 @@ kbx_status_t kbx_v4l2_start_capture(kbx_v4l2_device *device,
       /* re-queue buffer */
       if (-1 == xioctl(device->fd, VIDIOC_QBUF, &buffer_info)) {
         printf("VIDIOC_QBUF error %d, %s\n", errno, strerror(errno));
-        return KBX_STATUS_ERR_IO;
+        return ZCVR_STATUS_ERR_IO;
       }
       break;
     }
   }
 
-  return KBX_STATUS_SUCCESS;
+  return ZCVR_STATUS_SUCCESS;
 }
 
-kbx_status_t kbx_v4l2_stop_capture(kbx_v4l2_device *device,
-                                   kbx_v4l2_init_params_t *params) {
+ZCVR_status_t ZCVR_v4l2_stop_capture(ZCVR_v4l2_device *device,
+                                   ZCVR_v4l2_init_params_t *params) {
   (void)params;
   enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
   if (-1 == xioctl(device->fd, VIDIOC_STREAMOFF, &type)) {
     printf("VIDIOC_STREAMOFF error %d, %s\n", errno, strerror(errno));
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
-  return KBX_STATUS_SUCCESS;
+  return ZCVR_STATUS_SUCCESS;
 }
 
-void kbx_v4l2_destroy(kbx_v4l2_device *device) {
+void ZCVR_v4l2_destroy(ZCVR_v4l2_device *device) {
   if (device->buffers) {
     for (unsigned int i = 0; i < device->n_buffers; ++i) {
       munmap(device->buffers[i].start, device->buffers[i].length);
@@ -369,7 +369,7 @@ void kbx_v4l2_destroy(kbx_v4l2_device *device) {
   }
 }
 
-kbx_status_t kbx_v4l2_export_dmabuf(kbx_v4l2_device *device, uint32_t index,
+ZCVR_status_t ZCVR_v4l2_export_dmabuf(ZCVR_v4l2_device *device, uint32_t index,
                                     int *fd) {
   struct v4l2_exportbuffer exp_buf;
   CLEAR(exp_buf);
@@ -381,14 +381,14 @@ kbx_status_t kbx_v4l2_export_dmabuf(kbx_v4l2_device *device, uint32_t index,
   int ret = xioctl(device->fd, VIDIOC_EXPBUF, &exp_buf);
   if (ret < 0) {
     printf("VIDIOC_EXPBUF error %d, %s\n", errno, strerror(errno));
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
   *fd = exp_buf.fd;
-  return KBX_STATUS_SUCCESS;
+  return ZCVR_STATUS_SUCCESS;
 }
 
-kbx_status_t kbx_v4l2_read(kbx_v4l2_device *device, kbx_image *image) {
-  if (!device || !image) return KBX_STATUS_ERR_IO;
+ZCVR_status_t ZCVR_v4l2_read(ZCVR_v4l2_device *device, ZCVR_image *image) {
+  if (!device || !image) return ZCVR_STATUS_ERR_IO;
 
   struct v4l2_buffer buffer_info;
   CLEAR(buffer_info);
@@ -397,8 +397,8 @@ kbx_status_t kbx_v4l2_read(kbx_v4l2_device *device, kbx_image *image) {
 
   // Dequeue best available buffer
   if (-1 == xioctl(device->fd, VIDIOC_DQBUF, &buffer_info)) {
-    if (errno == EAGAIN) return KBX_STATUS_ERR_IO; // Non-blocking retry
-    return KBX_STATUS_ERR_IO;
+    if (errno == EAGAIN) return ZCVR_STATUS_ERR_IO; // Non-blocking retry
+    return ZCVR_STATUS_ERR_IO;
   }
 
   // If user provided a buffer, copy the frame data natively
@@ -410,20 +410,20 @@ kbx_status_t kbx_v4l2_read(kbx_v4l2_device *device, kbx_image *image) {
 
   // Queue buffer back to the device to prevent starvation
   if (-1 == xioctl(device->fd, VIDIOC_QBUF, &buffer_info)) {
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
-  return KBX_STATUS_SUCCESS;
+  return ZCVR_STATUS_SUCCESS;
 }
 
-kbx_status_t kbx_v4l2_write(kbx_v4l2_device *device, const kbx_image *image) {
-  if (!device || !image || !image->data) return KBX_STATUS_ERR_IO;
+ZCVR_status_t ZCVR_v4l2_write(ZCVR_v4l2_device *device, const ZCVR_image *image) {
+  if (!device || !image || !image->data) return ZCVR_STATUS_ERR_IO;
   
   // V4L2 writes (e.g. v4l2loopback or output devices) typically support native posix write
   int ret = write(device->fd, image->data, image->data_size);
   if (ret < 0) {
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
   
-  return KBX_STATUS_SUCCESS;
+  return ZCVR_STATUS_SUCCESS;
 }

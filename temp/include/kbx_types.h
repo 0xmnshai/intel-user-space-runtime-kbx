@@ -3,87 +3,87 @@
 #include <stdint.h>
 
 // Explicit 64-byte L1 Cache Line alignment
-#define KBX_CACHE_ALIGNED alignas(64)
+#define ZCVR_CACHE_ALIGNED alignas(64)
 
 typedef enum {
-  KBX_TASK_IDLE,
-  KBX_TASK_INFERENCE,
-  KBX_TASK_IMAGE_ACQUISITION,
-  KBX_TASK_PERFORMANCE_TEST
-} kbx_task_type;
+  ZCVR_TASK_IDLE,
+  ZCVR_TASK_INFERENCE,
+  ZCVR_TASK_IMAGE_ACQUISITION,
+  ZCVR_TASK_PERFORMANCE_TEST
+} ZCVR_task_type;
 
 typedef enum {
-  KBX_DETECTION_MODEL,
-  KBX_CLASSIFICATION_MODEL,
-} kbx_model_type;
+  ZCVR_DETECTION_MODEL,
+  ZCVR_CLASSIFICATION_MODEL,
+} ZCVR_model_type;
 
 typedef enum {
-  KBX_IMAGE_DATA_TYPE_UNKNOWN,
-  KBX_IMAGE_DATA_TYPE_GRAYSCALE,
-  KBX_IMAGE_DATA_TYPE_RGB,
-  KBX_IMAGE_DATA_TYPE_RGBA
-} kbx_image_data_type;
+  ZCVR_IMAGE_DATA_TYPE_UNKNOWN,
+  ZCVR_IMAGE_DATA_TYPE_GRAYSCALE,
+  ZCVR_IMAGE_DATA_TYPE_RGB,
+  ZCVR_IMAGE_DATA_TYPE_RGBA
+} ZCVR_image_data_type;
 
 typedef enum {
-  KBX_TASK_PRIORITY_LOW,
-  KBX_TASK_PRIORITY_MEDIUM,
-  KBX_TASK_PRIORITY_HIGH,
-  KBX_TASK_PRIORITY_REALTIME
-} kbx_task_priority;
+  ZCVR_TASK_PRIORITY_LOW,
+  ZCVR_TASK_PRIORITY_MEDIUM,
+  ZCVR_TASK_PRIORITY_HIGH,
+  ZCVR_TASK_PRIORITY_REALTIME
+} ZCVR_task_priority;
 
 typedef enum {
-  KBX_MODEL_CONFIG_TYPE_DEFAULT,
-  KBX_MODEL_CONFIG_TYPE_PERFORMANCE,
-  KBX_MODEL_CONFIG_TYPE_ACCURACY
-} kbx_model_config_type;
+  ZCVR_MODEL_CONFIG_TYPE_DEFAULT,
+  ZCVR_MODEL_CONFIG_TYPE_PERFORMANCE,
+  ZCVR_MODEL_CONFIG_TYPE_ACCURACY
+} ZCVR_model_config_type;
 
 typedef enum {
-  KBX_MEMORY_TYPE_RAM,
-  KBX_MEMORY_TYPE_VRAM,
-  KBX_MEMORY_TYPE_SYSTEM_MEMORY,
-  KBX_MEMORY_TYPE_SHARED_MEMORY
-} kbx_memory_type;
+  ZCVR_MEMORY_TYPE_RAM,
+  ZCVR_MEMORY_TYPE_VRAM,
+  ZCVR_MEMORY_TYPE_SYSTEM_MEMORY,
+  ZCVR_MEMORY_TYPE_SHARED_MEMORY
+} ZCVR_memory_type;
 
 typedef enum {
-  KBX_DEVICE_TYPE_CPU,
-  KBX_DEVICE_TYPE_GPU,
-  KBX_DEVICE_TYPE_NPU
-} kbx_device_type;
+  ZCVR_DEVICE_TYPE_CPU,
+  ZCVR_DEVICE_TYPE_GPU,
+  ZCVR_DEVICE_TYPE_NPU
+} ZCVR_device_type;
 
 typedef enum {
-  KBX_BACKEND_TYPE_OPENVINO,
-  KBX_BACKEND_TYPE_TENSORFLOW_LITE,
-} kbx_backend_type;
+  ZCVR_BACKEND_TYPE_OPENVINO,
+  ZCVR_BACKEND_TYPE_TENSORFLOW_LITE,
+} ZCVR_backend_type;
 
 typedef enum {
-  KBX_STATUS_SUCCESS = 0,
-  KBX_STATUS_ERR_NOMEM = -1,
-  KBX_STATUS_ERR_IO = -2,
-  KBX_STATUS_ERR_GPU = -3,
-  KBX_STATUS_ERR_DRM = -4,
-  KBX_STATUS_ERR_BPF = -5,
-  KBX_STATUS_ERR_VK = -6,
+  ZCVR_STATUS_SUCCESS = 0,
+  ZCVR_STATUS_ERR_NOMEM = -1,
+  ZCVR_STATUS_ERR_IO = -2,
+  ZCVR_STATUS_ERR_GPU = -3,
+  ZCVR_STATUS_ERR_DRM = -4,
+  ZCVR_STATUS_ERR_BPF = -5,
+  ZCVR_STATUS_ERR_VK = -6,
 
-  KBX_STATUS_ERR_GFX = -7,
+  ZCVR_STATUS_ERR_GFX = -7,
 
-  KBX_STATUS_CL_ERROR = -8
-} kbx_status_t;
+  ZCVR_STATUS_CL_ERROR = -8
+} ZCVR_status_t;
 
 typedef struct {
-  kbx_task_type task_type;
-  kbx_task_priority task_priority;
-} kbx_task_params;
+  ZCVR_task_type task_type;
+  ZCVR_task_priority task_priority;
+} ZCVR_task_params;
 
 typedef struct {
-  kbx_model_type model_type;
-  kbx_model_config_type model_config_type;
-  kbx_memory_type memory_type;
-  kbx_device_type device_type;
-  kbx_backend_type backend_type;
-} kbx_model_params;
+  ZCVR_model_type model_type;
+  ZCVR_model_config_type model_config_type;
+  ZCVR_memory_type memory_type;
+  ZCVR_device_type device_type;
+  ZCVR_backend_type backend_type;
+} ZCVR_model_params;
 
 typedef struct {
-  kbx_image_data_type image_data_type;
+  ZCVR_image_data_type image_data_type;
   uint32_t width;
   uint32_t height;
   uint32_t stride;
@@ -91,4 +91,4 @@ typedef struct {
   void *data;
   int fd;
   int dma_fd;
-} kbx_image;
+} ZCVR_image;

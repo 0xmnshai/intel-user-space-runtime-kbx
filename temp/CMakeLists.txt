@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.31.6)
-project(kbx_vision_runtime CXX)
+project(ZCVR_vision_runtime CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_COMPILER clang++-18)
@@ -77,4 +77,4 @@ endif()
 # )
 
 
-# sed -i 's/find_package(OpenVINO REQUIRED)/set(OpenVINO_DIR "${CMAKE_SOURCE_DIR}\/openvino\/runtime\/cmake")\nfind_package(OpenVINO REQUIRED)/' CMakeLists.txt && cd build && cmake .. && make && ./kbx_vision_runtime
+# sed -i 's/find_package(OpenVINO REQUIRED)/set(OpenVINO_DIR "${CMAKE_SOURCE_DIR}\/openvino\/runtime\/cmake")\nfind_package(OpenVINO REQUIRED)/' CMakeLists.txt && cd build && cmake .. && make && ./ZCVR_vision_runtime

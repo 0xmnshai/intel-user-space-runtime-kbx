@@ -11,9 +11,9 @@ using std::atomic_flag;
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "kbx_types.h"
+#include "ZCVR_types.h"
 
-#define KBX_PAGE_SIZE 4096
+#define ZCVR_PAGE_SIZE 4096
 
 typedef struct {
   size_t size;
@@ -21,7 +21,7 @@ typedef struct {
   size_t offset;
   size_t used_size;
   atomic_flag is_used;
-} kbx_mem_block;
+} ZCVR_mem_block;
 
 typedef struct {
   void *buf;
@@ -29,61 +29,61 @@ typedef struct {
   size_t used;
   size_t peak_used;
   size_t block_size;
-  kbx_mem_block *blocks;
-} kbx_mem_pool;
+  ZCVR_mem_block *blocks;
+} ZCVR_mem_pool;
 
-typedef struct KBX_CACHE_ALIGNED {
+typedef struct ZCVR_CACHE_ALIGNED {
   uint32_t head;
   uint32_t tail;
   uint32_t size;
-  kbx_task_params *tasks;
+  ZCVR_task_params *tasks;
   void **data;
-} kbx_task_queue;
+} ZCVR_task_queue;
 
-typedef struct kbx_mem_manager {
-  kbx_mem_pool *cpu_pool;
-  kbx_mem_pool *gpu_pool;
-  kbx_mem_pool *shared_pool;
-  kbx_mem_pool *system_pool;
+typedef struct ZCVR_mem_manager {
+  ZCVR_mem_pool *cpu_pool;
+  ZCVR_mem_pool *gpu_pool;
+  ZCVR_mem_pool *shared_pool;
+  ZCVR_mem_pool *system_pool;
   uint8_t *framebuffer;
   size_t framebuffer_size;
   uint8_t *display_buffer;
   size_t display_buffer_size;
   int drm_fd;
   int drm_fb_id;
-} kbx_mem_manager;
+} ZCVR_mem_manager;
 
-typedef struct KBX_CACHE_ALIGNED {
+typedef struct ZCVR_CACHE_ALIGNED {
   size_t head;
   size_t tail;
-  kbx_task_params *tasks;
+  ZCVR_task_params *tasks;
   size_t capacity;
-  kbx_mem_manager *mem_manager;
-} kbx_ring_t;
+  ZCVR_mem_manager *mem_manager;
+} ZCVR_ring_t;
 
 extern "C" {
-kbx_status_t kbx_mem_pool_init(kbx_mem_manager *mem_manager, size_t size);
-void kbx_mem_pool_destroy(kbx_mem_manager *mem_manager);
+ZCVR_status_t ZCVR_mem_pool_init(ZCVR_mem_manager *mem_manager, size_t size);
+void ZCVR_mem_pool_destroy(ZCVR_mem_manager *mem_manager);
 
-kbx_status_t kbx_ring_init(kbx_task_queue *ring, size_t size);
-void kbx_ring_destroy(kbx_task_queue *ring);
-bool kbx_ring_push(kbx_task_queue *ring, const kbx_task_params *task, void *data);
-bool kbx_ring_pop(kbx_task_queue *ring, kbx_task_params *task, void **data);
-bool kbx_ring_is_full(const kbx_task_queue *ring);
-bool kbx_ring_is_empty(const kbx_task_queue *ring);
+ZCVR_status_t ZCVR_ring_init(ZCVR_task_queue *ring, size_t size);
+void ZCVR_ring_destroy(ZCVR_task_queue *ring);
+bool ZCVR_ring_push(ZCVR_task_queue *ring, const ZCVR_task_params *task, void *data);
+bool ZCVR_ring_pop(ZCVR_task_queue *ring, ZCVR_task_params *task, void **data);
+bool ZCVR_ring_is_full(const ZCVR_task_queue *ring);
+bool ZCVR_ring_is_empty(const ZCVR_task_queue *ring);
 
-void *kbx_mem_alloc(kbx_mem_manager *mem_manager, size_t size);
-void kbx_mem_free(kbx_mem_manager *mem_manager, void *ptr);
+void *ZCVR_mem_alloc(ZCVR_mem_manager *mem_manager, size_t size);
+void ZCVR_mem_free(ZCVR_mem_manager *mem_manager, void *ptr);
 
-void *kbx_mem_cpu_alloc(kbx_mem_manager *mem_manager, size_t size);
-void kbx_mem_cpu_free(kbx_mem_manager *mem_manager, void *ptr);
+void *ZCVR_mem_cpu_alloc(ZCVR_mem_manager *mem_manager, size_t size);
+void ZCVR_mem_cpu_free(ZCVR_mem_manager *mem_manager, void *ptr);
 
-void *kbx_mem_gpu_alloc(kbx_mem_manager *mem_manager, size_t size);
-void kbx_mem_gpu_free(kbx_mem_manager *mem_manager, void *ptr);
+void *ZCVR_mem_gpu_alloc(ZCVR_mem_manager *mem_manager, size_t size);
+void ZCVR_mem_gpu_free(ZCVR_mem_manager *mem_manager, void *ptr);
 
-void *kbx_mem_shared_alloc(kbx_mem_manager *mem_manager, size_t size);
-void kbx_mem_shared_free(kbx_mem_manager *mem_manager, void *ptr);
+void *ZCVR_mem_shared_alloc(ZCVR_mem_manager *mem_manager, size_t size);
+void ZCVR_mem_shared_free(ZCVR_mem_manager *mem_manager, void *ptr);
 
-void *kbx_mem_system_alloc(kbx_mem_manager *mem_manager, size_t size);
-void kbx_mem_system_free(kbx_mem_manager *mem_manager, void *ptr);
+void *ZCVR_mem_system_alloc(ZCVR_mem_manager *mem_manager, size_t size);
+void ZCVR_mem_system_free(ZCVR_mem_manager *mem_manager, void *ptr);
 }

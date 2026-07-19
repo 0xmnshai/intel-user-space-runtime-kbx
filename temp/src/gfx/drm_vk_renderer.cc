@@ -1,10 +1,10 @@
-#include "kbx_vulkan.h"
+#include "ZCVR_vulkan.h"
 #include <cstdio>
 #include <cstring>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
-kbx_status_t kbx_vulkan_init(kbx_vulkan_context_t *ctx) {
+ZCVR_status_t ZCVR_vulkan_init(ZCVR_vulkan_context_t *ctx) {
   // Vulkan Instance
   VkApplicationInfo app_info = {};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -52,7 +52,7 @@ kbx_status_t kbx_vulkan_init(kbx_vulkan_context_t *ctx) {
   if (vkCreateInstance(&instance_create_info, NULL, &ctx->instance) !=
       VK_SUCCESS) {
     printf("Failed to create Vulkan instance\n");
-    return KBX_STATUS_ERR_GFX;
+    return ZCVR_STATUS_ERR_GFX;
   }
 
   // Physical Device
@@ -61,7 +61,7 @@ kbx_status_t kbx_vulkan_init(kbx_vulkan_context_t *ctx) {
   if (physical_device_count == 0) {
     printf("No physical devices found\n");
     vkDestroyInstance(ctx->instance, NULL);
-    return KBX_STATUS_ERR_GFX;
+    return ZCVR_STATUS_ERR_GFX;
   }
 
   std::vector<VkPhysicalDevice> physical_devices(physical_device_count);
@@ -107,7 +107,7 @@ kbx_status_t kbx_vulkan_init(kbx_vulkan_context_t *ctx) {
   if (graphics_queue_family_index == UINT32_MAX) {
     printf("Failed to find graphics queue family\n");
     vkDestroyInstance(ctx->instance, NULL);
-    return KBX_STATUS_ERR_GFX;
+    return ZCVR_STATUS_ERR_GFX;
   }
 
   // Device
@@ -141,7 +141,7 @@ kbx_status_t kbx_vulkan_init(kbx_vulkan_context_t *ctx) {
                      &ctx->device) != VK_SUCCESS) {
     printf("Failed to create Vulkan device\n");
     vkDestroyInstance(ctx->instance, NULL);
-    return KBX_STATUS_ERR_GFX;
+    return ZCVR_STATUS_ERR_GFX;
   }
 
   // Graphics Queue
@@ -160,7 +160,7 @@ kbx_status_t kbx_vulkan_init(kbx_vulkan_context_t *ctx) {
     printf("Failed to create Vulkan command pool\n");
     vkDestroyDevice(ctx->device, NULL);
     vkDestroyInstance(ctx->instance, NULL);
-    return KBX_STATUS_ERR_GFX;
+    return ZCVR_STATUS_ERR_GFX;
   }
 
   // Command Buffer
@@ -177,13 +177,13 @@ kbx_status_t kbx_vulkan_init(kbx_vulkan_context_t *ctx) {
     vkDestroyCommandPool(ctx->device, ctx->cmd_pool, NULL);
     vkDestroyDevice(ctx->device, NULL);
     vkDestroyInstance(ctx->instance, NULL);
-    return KBX_STATUS_ERR_GFX;
+    return ZCVR_STATUS_ERR_GFX;
   }
 
-  return KBX_STATUS_SUCCESS;
+  return ZCVR_STATUS_SUCCESS;
 }
 
-kbx_status_t kbx_vulkan_deinit(kbx_vulkan_context_t *ctx) {
+ZCVR_status_t ZCVR_vulkan_deinit(ZCVR_vulkan_context_t *ctx) {
   if (ctx->device) {
     vkDeviceWaitIdle(ctx->device);
   }
@@ -202,5 +202,5 @@ kbx_status_t kbx_vulkan_deinit(kbx_vulkan_context_t *ctx) {
   }
 
   printf("Vulkan deinitialized\n");
-  return KBX_STATUS_SUCCESS;
+  return ZCVR_STATUS_SUCCESS;
 }

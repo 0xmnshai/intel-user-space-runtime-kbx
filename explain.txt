@@ -1,3 +1,7 @@
+first try getting bpf files 
+trace & vmlinux 
+
+bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
 
 camera to ram to gpu to ai to cpu to display ( normally )
 

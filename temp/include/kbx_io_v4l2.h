@@ -1,9 +1,9 @@
 #pragma once
 
-#include "kbx_types.h"
+#include "ZCVR_types.h"
 #include <linux/videodev2.h>
 
-typedef struct kbx_buffer {
+typedef struct ZCVR_buffer {
   void *start;
   size_t length;
   size_t bytesused;
@@ -15,16 +15,16 @@ typedef struct kbx_buffer {
   __u64 timestamp;
   void *priv;
   __u32 memory;
-} kbx_buffer;
+} ZCVR_buffer;
 
-typedef struct kbx_v4l2_device {
+typedef struct ZCVR_v4l2_device {
   int fd;
-  kbx_image image;
-  kbx_buffer *buffers;
+  ZCVR_image image;
+  ZCVR_buffer *buffers;
   uint32_t n_buffers;
-} kbx_v4l2_device;
+} ZCVR_v4l2_device;
 
-typedef struct kbx_v4l2_init_params {
+typedef struct ZCVR_v4l2_init_params {
   char *device_name;
   uint32_t width;
   uint32_t height;
@@ -32,9 +32,9 @@ typedef struct kbx_v4l2_init_params {
   uint32_t interval;
   uint32_t io_type;
   uint32_t frame_count;
-} kbx_v4l2_init_params_t;
+} ZCVR_v4l2_init_params_t;
 
-typedef struct kbx_camera_device {
+typedef struct ZCVR_camera_device {
 
   int fd;
   struct v4l2_capability capability;
@@ -45,23 +45,23 @@ typedef struct kbx_camera_device {
   struct v4l2_buffer buffer;
   struct v4l2_requestbuffers requestbuffers;
   struct v4l2_crop crop;
-} kbx_camera_device;
+} ZCVR_camera_device;
 
 extern "C" {
 
-kbx_status_t kbx_v4l2_init(kbx_v4l2_device *device,
-                           const kbx_v4l2_init_params_t *params);
-void kbx_v4l2_destroy(kbx_v4l2_device *device);
+ZCVR_status_t ZCVR_v4l2_init(ZCVR_v4l2_device *device,
+                           const ZCVR_v4l2_init_params_t *params);
+void ZCVR_v4l2_destroy(ZCVR_v4l2_device *device);
 
-kbx_status_t kbx_v4l2_start_capture(kbx_v4l2_device *device,
-                                    kbx_v4l2_init_params_t *params);
+ZCVR_status_t ZCVR_v4l2_start_capture(ZCVR_v4l2_device *device,
+                                    ZCVR_v4l2_init_params_t *params);
 
-kbx_status_t kbx_v4l2_stop_capture(kbx_v4l2_device *device,
-                                   kbx_v4l2_init_params_t *params);
+ZCVR_status_t ZCVR_v4l2_stop_capture(ZCVR_v4l2_device *device,
+                                   ZCVR_v4l2_init_params_t *params);
 
-kbx_status_t kbx_v4l2_read(kbx_v4l2_device *device, kbx_image *image);
-kbx_status_t kbx_v4l2_write(kbx_v4l2_device *device, const kbx_image *image);
+ZCVR_status_t ZCVR_v4l2_read(ZCVR_v4l2_device *device, ZCVR_image *image);
+ZCVR_status_t ZCVR_v4l2_write(ZCVR_v4l2_device *device, const ZCVR_image *image);
 
-kbx_status_t kbx_v4l2_export_dmabuf(kbx_v4l2_device *device, uint32_t index,
+ZCVR_status_t ZCVR_v4l2_export_dmabuf(ZCVR_v4l2_device *device, uint32_t index,
                                     int *fd);
 }

@@ -1,7 +1,7 @@
 
-#include "kbx_compute.h"
-#include "kbx_mem.h"
-#include "kbx_types.h"
+#include "ZCVR_compute.h"
+#include "ZCVR_mem.h"
+#include "ZCVR_types.h"
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
@@ -9,9 +9,9 @@
 #include <CL/cl.h>
 #include <CL/cl_ext.h>
 
-kbx_status_t kbx_cl_init(kbx_cl_ctx *ctx, kbx_mem_manager *mem_manager) {
+ZCVR_status_t ZCVR_cl_init(ZCVR_cl_ctx *ctx, ZCVR_mem_manager *mem_manager) {
   if (!ctx || !mem_manager) {
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   ctx->mem_manager = mem_manager;
@@ -21,7 +21,7 @@ kbx_status_t kbx_cl_init(kbx_cl_ctx *ctx, kbx_mem_manager *mem_manager) {
   ret = clGetPlatformIDs(0, nullptr, &num_platforms);
   if (ret != CL_SUCCESS || num_platforms == 0) {
     fprintf(stderr, "[KBX][CL] No OpenCL platforms found. (Error: %d)\n", ret);
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   cl_platform_id *platforms = new cl_platform_id[num_platforms];
@@ -74,7 +74,7 @@ kbx_status_t kbx_cl_init(kbx_cl_ctx *ctx, kbx_mem_manager *mem_manager) {
 
   if (!best_device) {
     fprintf(stderr, "[KBX][CL] Failed to find any suitable OpenCL device.\n");
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   // 4. Log selected hardware
@@ -105,7 +105,7 @@ kbx_status_t kbx_cl_init(kbx_cl_ctx *ctx, kbx_mem_manager *mem_manager) {
   if (ret != CL_SUCCESS) {
     fprintf(stderr, "[KBX][CL] Failed to create OpenCL context. (Error: %d)\n",
             ret);
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   // 6. Create Command Queue
@@ -123,7 +123,7 @@ kbx_status_t kbx_cl_init(kbx_cl_ctx *ctx, kbx_mem_manager *mem_manager) {
       fprintf(stderr, "[KBX][CL] Failed to create command queue. (Error: %d)\n",
               ret);
       clReleaseContext(context);
-      return KBX_STATUS_ERR_IO;
+      return ZCVR_STATUS_ERR_IO;
     }
     command_queue = fallback_queue;
     printf(
@@ -136,20 +136,20 @@ kbx_status_t kbx_cl_init(kbx_cl_ctx *ctx, kbx_mem_manager *mem_manager) {
   ctx->context = context;
   ctx->queue = command_queue;
 
-  return KBX_STATUS_SUCCESS;
+  return ZCVR_STATUS_SUCCESS;
 }
 
-kbx_status_t kbx_cl_load_kernels(kbx_cl_ctx *ctx, const char *source) {
+ZCVR_status_t ZCVR_cl_load_kernels(ZCVR_cl_ctx *ctx, const char *source) {
   if (!ctx || !source || !ctx->mem_manager) {
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   cl_int ret;
   size_t length = strlen(source);
-  char *source_str = (char *)kbx_mem_alloc(ctx->mem_manager, length + 1);
+  char *source_str = (char *)ZCVR_mem_alloc(ctx->mem_manager, length + 1);
   if (!source_str) {
     fprintf(stderr, "[KBX][CL] Failed to allocate memory for source string.\n");
-    return KBX_STATUS_ERR_NOMEM;
+    return ZCVR_STATUS_ERR_NOMEM;
   }
   memcpy(source_str, source, length + 1);
 
@@ -157,8 +157,8 @@ kbx_status_t kbx_cl_load_kernels(kbx_cl_ctx *ctx, const char *source) {
       ctx->context, 1, (const char **)&source_str, &length, &ret);
   if (ret != CL_SUCCESS) {
     fprintf(stderr, "[KBX][CL] Failed to create program. (Error: %d)\n", ret);
-    kbx_mem_free(ctx->mem_manager, source_str);
-    return KBX_STATUS_ERR_GPU;
+    ZCVR_mem_free(ctx->mem_manager, source_str);
+    return ZCVR_STATUS_ERR_GPU;
   }
 
   ret =
@@ -169,18 +169,18 @@ kbx_status_t kbx_cl_load_kernels(kbx_cl_ctx *ctx, const char *source) {
     size_t log_size;
     clGetProgramBuildInfo(ctx->program, ctx->device, CL_PROGRAM_BUILD_LOG, 0,
                           nullptr, &log_size);
-    char *log = (char *)kbx_mem_alloc(ctx->mem_manager, log_size + 1);
+    char *log = (char *)ZCVR_mem_alloc(ctx->mem_manager, log_size + 1);
     if (log) {
       clGetProgramBuildInfo(ctx->program, ctx->device, CL_PROGRAM_BUILD_LOG,
                             log_size, log, nullptr);
       fprintf(stderr, "[KBX][CL] Build Log:\n%s\n", log);
-      kbx_mem_free(ctx->mem_manager, log);
+      ZCVR_mem_free(ctx->mem_manager, log);
     }
 
-    kbx_mem_free(ctx->mem_manager, source_str);
+    ZCVR_mem_free(ctx->mem_manager, source_str);
     clReleaseProgram(ctx->program);
     ctx->program = nullptr;
-    return KBX_STATUS_ERR_GPU;
+    return ZCVR_STATUS_ERR_GPU;
   }
 
   // Create known kernels
@@ -192,16 +192,16 @@ kbx_status_t kbx_cl_load_kernels(kbx_cl_ctx *ctx, const char *source) {
   }
 
   printf("[KBX][CL] Kernels loaded successfully.\n");
-  kbx_mem_free(ctx->mem_manager, source_str);
-  return KBX_STATUS_SUCCESS;
+  ZCVR_mem_free(ctx->mem_manager, source_str);
+  return ZCVR_STATUS_SUCCESS;
 }
 
-kbx_status_t kbx_cl_import_dmabuf(kbx_cl_ctx *ctx, int dmabuf_fd, size_t size,
+ZCVR_status_t ZCVR_cl_import_dmabuf(ZCVR_cl_ctx *ctx, int dmabuf_fd, size_t size,
 
                                   cl_mem *out_buf) {
   if (!ctx || dmabuf_fd < 0 || size == 0 || !out_buf) {
     fprintf(stderr, "[KBX][CL] Invalid arguments for dmabuf import.\n");
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   // Check at runtime that the platform actually exposes the extension
@@ -212,14 +212,14 @@ kbx_status_t kbx_cl_import_dmabuf(kbx_cl_ctx *ctx, int dmabuf_fd, size_t size,
   if (ret != CL_SUCCESS) {
     fprintf(stderr, "[KBX][CL] Failed to get device extensions. (Error: %d)\n",
             ret);
-    return KBX_STATUS_ERR_GPU;
+    return ZCVR_STATUS_ERR_GPU;
   }
   ret = clGetDeviceInfo(ctx->device, CL_DEVICE_EXTENSIONS, ext_size,
                         (void *)exts, NULL);
   if (ret != CL_SUCCESS) {
     fprintf(stderr, "[KBX][CL] Failed to get device extensions. (Error: %d)\n",
             ret);
-    return KBX_STATUS_ERR_GPU;
+    return ZCVR_STATUS_ERR_GPU;
   }
   exts[ext_size] = '\0'; // Ensure null-termination
 
@@ -244,7 +244,7 @@ kbx_status_t kbx_cl_import_dmabuf(kbx_cl_ctx *ctx, int dmabuf_fd, size_t size,
 
   if (!clImportMemoryARM) {
     fprintf(stderr, "[KBX][CL] clImportMemoryARM not found.\n");
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   cl_import_properties_arm props[] = {
@@ -261,7 +261,7 @@ kbx_status_t kbx_cl_import_dmabuf(kbx_cl_ctx *ctx, int dmabuf_fd, size_t size,
             "[KBX][CL] Failed to import dmabuf using clImportMemoryARM. "
             "(Error: %d)\n",
             err);
-    return KBX_STATUS_CL_ERROR;
+    return ZCVR_STATUS_CL_ERROR;
   }
 
 #elif defined(cl_khr_external_memory)
@@ -279,14 +279,14 @@ kbx_status_t kbx_cl_import_dmabuf(kbx_cl_ctx *ctx, int dmabuf_fd, size_t size,
         "[KBX][CL] Failed to import dmabuf using clCreateBufferWithProperties. "
         "(Error: %d)\n",
         err);
-    return KBX_STATUS_CL_ERROR;
+    return ZCVR_STATUS_CL_ERROR;
   }
 
 #else
   /* Neither extension is available at compile time */
   (void)dmabuf_fd;
   (void)size;
-  return KBX_STATUS_NOT_SUPPORTED;
+  return ZCVR_STATUS_NOT_SUPPORTED;
 #endif
 
   if (ctx->imported_image) {
@@ -296,7 +296,7 @@ kbx_status_t kbx_cl_import_dmabuf(kbx_cl_ctx *ctx, int dmabuf_fd, size_t size,
   ctx->imported_image = buf;
   *out_buf = buf;
 
-  return KBX_STATUS_SUCCESS;
+  return ZCVR_STATUS_SUCCESS;
 }
 
 /**
@@ -306,17 +306,17 @@ plane followed by an interleaved U/V (chrominance) plane. It uses 12 bits per
 pixel, with chroma subsampled by a factor of 2 horizontally and vertically
 */
 
-kbx_status_t kbx_cl_convert_nv12_to_rgb(kbx_cl_ctx *ctx, cl_mem nv12_buf,
+ZCVR_status_t ZCVR_cl_convert_nv12_to_rgb(ZCVR_cl_ctx *ctx, cl_mem nv12_buf,
                                         cl_mem rgb_buf, uint32_t width,
                                         uint32_t height) {
   if (!ctx || !nv12_buf || !rgb_buf || width == 0 || height == 0) {
     fprintf(stderr, "[KBX][CL] Invalid arguments for NV12->RGB conversion.\n");
-    return KBX_STATUS_ERR_IO;
+    return ZCVR_STATUS_ERR_IO;
   }
 
   if (!ctx->kernel_nv12_to_rgb) {
     fprintf(stderr, "[KBX][CL] kernel_nv12_to_rgb not loaded.\n");
-    return KBX_STATUS_ERR_GPU;
+    return ZCVR_STATUS_ERR_GPU;
   }
 
   cl_int ret;
@@ -325,28 +325,28 @@ kbx_status_t kbx_cl_convert_nv12_to_rgb(kbx_cl_ctx *ctx, cl_mem nv12_buf,
   if (ret != CL_SUCCESS) {
     fprintf(stderr, "[KBX][CL] Failed to set arg 0 for kernel. (Error: %d)\n",
             ret);
-    return KBX_STATUS_ERR_GPU;
+    return ZCVR_STATUS_ERR_GPU;
   }
 
   ret = clSetKernelArg(ctx->kernel_nv12_to_rgb, 1, sizeof(cl_mem), &rgb_buf);
   if (ret != CL_SUCCESS) {
     fprintf(stderr, "[KBX][CL] Failed to set arg 1 for kernel. (Error: %d)\n",
             ret);
-    return KBX_STATUS_ERR_GPU;
+    return ZCVR_STATUS_ERR_GPU;
   }
 
   ret = clSetKernelArg(ctx->kernel_nv12_to_rgb, 2, sizeof(uint32_t), &width);
   if (ret != CL_SUCCESS) {
     fprintf(stderr, "[KBX][CL] Failed to set arg 2 for kernel. (Error: %d)\n",
             ret);
-    return KBX_STATUS_ERR_GPU;
+    return ZCVR_STATUS_ERR_GPU;
   }
 
   ret = clSetKernelArg(ctx->kernel_nv12_to_rgb, 3, sizeof(uint32_t), &height);
   if (ret != CL_SUCCESS) {
     fprintf(stderr, "[KBX][CL] Failed to set arg 3 for kernel. (Error: %d)\n",
             ret);
-    return KBX_STATUS_ERR_GPU;
+    return ZCVR_STATUS_ERR_GPU;
   }
 
   const size_t local[2] = {16, 16};
@@ -364,19 +364,19 @@ kbx_status_t kbx_cl_convert_nv12_to_rgb(kbx_cl_ctx *ctx, cl_mem nv12_buf,
                                &event); // event
   if (ret != CL_SUCCESS) {
     fprintf(stderr, "[KBX][CL] Failed to enqueue kernel. (Error: %d)\n", ret);
-    return KBX_STATUS_ERR_GPU;
+    return ZCVR_STATUS_ERR_GPU;
   }
 
   ret = clFinish(ctx->queue);
   if (ret != CL_SUCCESS) {
     fprintf(stderr, "[KBX][CL] Failed to finish queue. (Error: %d)\n", ret);
-    return KBX_STATUS_ERR_GPU;
+    return ZCVR_STATUS_ERR_GPU;
   }
 
   ret = clWaitForEvents(1, &event);
   clReleaseEvent(event);
 
-  return KBX_STATUS_SUCCESS;
+  return ZCVR_STATUS_SUCCESS;
 }
 void ManualNV12ToRGB(unsigned char *nv12, unsigned char *rgb, int width,
                      int height) {

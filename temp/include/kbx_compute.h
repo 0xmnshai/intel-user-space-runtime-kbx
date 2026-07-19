@@ -1,8 +1,8 @@
 #pragma once
 #include <CL/cl.h>
 
-#include "kbx_mem.h"
-#include "kbx_types.h"
+#include "ZCVR_mem.h"
+#include "ZCVR_types.h"
 
 typedef struct {
   cl_platform_id platform;
@@ -15,19 +15,19 @@ typedef struct {
 
   // image / memory
   cl_mem imported_image;
-  struct kbx_mem_manager *mem_manager;
-} kbx_cl_ctx;
+  struct ZCVR_mem_manager *mem_manager;
+} ZCVR_cl_ctx;
 
-kbx_status_t kbx_cl_init(kbx_cl_ctx *ctx, struct kbx_mem_manager *mem_manager);
+ZCVR_status_t ZCVR_cl_init(ZCVR_cl_ctx *ctx, struct ZCVR_mem_manager *mem_manager);
 
-kbx_status_t kbx_cl_load_kernels(kbx_cl_ctx *ctx, const char *source);
+ZCVR_status_t ZCVR_cl_load_kernels(ZCVR_cl_ctx *ctx, const char *source);
 
 /**
 import_dmabuf
 imports dma buffer for opencl kernel
 
 */
-kbx_status_t kbx_cl_import_dmabuf(kbx_cl_ctx *ctx, int dmabuf_fd, size_t size,
+ZCVR_status_t ZCVR_cl_import_dmabuf(ZCVR_cl_ctx *ctx, int dmabuf_fd, size_t size,
                                   cl_mem *out_buf);
 
 /**
@@ -36,8 +36,8 @@ converts nv12 image to rgb image
 
 */
 
-kbx_status_t kbx_cl_convert_nv12_to_rgb(kbx_cl_ctx *ctx, cl_mem nv12_buf,
+ZCVR_status_t ZCVR_cl_convert_nv12_to_rgb(ZCVR_cl_ctx *ctx, cl_mem nv12_buf,
                                         cl_mem rgb_buf, uint32_t width,
                                         uint32_t height);
 
-kbx_status_t kbx_cl_deinit(kbx_cl_ctx *ctx);
+ZCVR_status_t ZCVR_cl_deinit(ZCVR_cl_ctx *ctx);

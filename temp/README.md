@@ -92,8 +92,8 @@ ulimit -l unlimited   # or set memlock in /etc/security/limits.conf — MAP_LOCK
 ├── include/
 │   └── kbx/core/
 │       ├── compiler.h        # LIKELY/UNLIKELY, ALWAYS_INLINE, alignas helpers
-│       ├── types.h           # kbx_status_t, fixed-width aliases
-│       └── assert.h          # KBX_CHECK -> __builtin_trap(), no unwinding
+│       ├── types.h           # ZCVR_status_t, fixed-width aliases
+│       └── assert.h          # ZCVR_CHECK -> __builtin_trap(), no unwinding
 ├── src/
 │   ├── mem/
 │   │   ├── arena.cc          # hugepage bump allocator
@@ -121,9 +121,9 @@ ulimit -l unlimited   # or set memlock in /etc/security/limits.conf — MAP_LOCK
 │   ├── bbox.vert.glsl
 │   └── bbox.frag.glsl
 ├── bpf/
-│   ├── kbx_trace.bpf.c
+│   ├── ZCVR_trace.bpf.c
 │   ├── vmlinux.h             # generated, tools/gen_vmlinux.sh
-│   └── kbx_trace.skel.h      # generated, tools/gen_bpf_skel.sh
+│   └── ZCVR_trace.skel.h      # generated, tools/gen_bpf_skel.sh
 ├── cmake/targets/
 │   ├── kernels.cmake
 │   └── bpf.cmake
