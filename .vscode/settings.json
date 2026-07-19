@@ -1,5 +1,0 @@
-{
-  "git.ignoreLimitWarning": true,
-  "clang-format.fallbackStyle": "llvm",
-  "clang-format.style": "file"
-}
