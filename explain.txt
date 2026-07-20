@@ -1,0 +1,66 @@
+
+camera to ram to gpu to ai to cpu to display ( normally )
+
+to do:
+camera to virtual gpu to ai to display 
+
+this is zero copy, same memory used without creating a copy in cpu 
+
+so now we can use gbm to create a buffer and pass to other process via dma buf export and import 
+
+as ram usage 4kb chunk size, we can use Huge Pages which will use 2kb, which means less TLB miss, cache miss, better performance 
+
+we will use alignas to pad data on their own cache lines to avoid cache bouncing and false sharing 
+
+libnuma use for numa aware memory allocation - it will allocate memory on the right NUMA node as the process 
+
+V4L2_MEMORY_DMABUF - write directly to gpu memory address - it writes pixel directly to to V4L2_MEMORY_DMABUF, cpu will not use this pixel data 
+
+intel level zero - Instead of batching GPU commands and submitting them (which adds latency), this submits commands immediately to the GPU's hardware command streamer.
+
+SPIR-V Kernels: GPU programs compiled into a portable bytecode format. The specific operation here is NV12→RGB color conversion using subgroup primitives — a GPU feature where a group of 8–32 shader threads can share data through registers instead of going through slower memory.
+
+Normally: CPU allocates a tensor → copies frame data into it → GPU runs inference
+Here: GPU memory is wrapped directly as an ov::RemoteTensor → OpenVINO reads from the same physical address the camera wrote to
+No copy. The AI model (YOLOv8 in this case) runs on the NPU/GPU and outputs tiny bounding box coordinates (just 4 numbers per detection) which the CPU does read — but that's negligible data.
+
+Vulkan imports the same DMA-BUF buffer (via VK_EXT_external_memory_dma_buf) and draws the bounding boxes directly onto the frame using the GPU's hardware rasterizer.
+
+Anti-aliased lines and alpha-blended masks are drawn in hardware — no CPU pixel This bypasses Wayland entirely. drmModeAtomicCommit updates the hardware CRTC (display controller) directly at the exact moment of VSYNC (vertical blanking interval — the 1/60th second gap between frames) so the annotated frame appears with zero tearing and minimal latency.math.
+A semaphore (VK_KHR_external_semaphore_fd) is created so the display system knows exactly when rendering is done before it shows the frame.
+
+DRM/KMS is Linux's bare-metal display API. Normally applications go through a Wayland compositor (like a desktop's window manager), which adds a full extra frame of latency.
+
+This bypasses Wayland entirely. drmModeAtomicCommit updates the hardware CRTC (display controller) directly at the exact moment of VSYNC (vertical blanking interval — the 1/60th second gap between frames) so the annotated frame appears with zero tearing and minimal latency.
+
+eBPF lets you inject small programs into the Linux kernel without modifying kernel source or rebooting. Here it hooks into:
+
+i915_request_add — the moment the kernel submits a job to the Intel GPU
+i915_request_retire — the moment the GPU signals it's done
+
+overview:
+
+Full NV12 pixel format memory layout (critical for writing the SPIR-V kernel correctly)
+The complete V4L2 buffer lifecycle with the correct initialization sequence
+The full Vulkan object graph and the correct DMA-BUF memory type query (the source code was missing this — it would crash without it)
+DRM/KMS atomic vs legacy comparison, and how to register DMA-BUF as a framebuffer
+The complete eBPF program with both submit and retire hooks plus an in-flight hash map for measuring actual GPU execution time
+
+
+learn about SYCL : https://registry.khronos.org/SYCL/specs/sycl-2020/html/sycl-2020.html#introduction
+
+this is the intel implementation of SYCL, it is called intel-oneapi-dpcpp-cpp : https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html
+
+YUV Sampling:
+
+    4:4:4 means no downsampling of the chroma channels.
+    4:2:2 means 2:1 horizontal downsampling, with no vertical downsampling. Every scan line contains four Y samples for every two U or V samples.
+    4:2:0 means 2:1 horizontal downsampling, with 2:1 vertical downsampling.
+    4:1:1 means 4:1 horizontal downsampling, with no vertical downsampling. Every scan line contains four Y samples for each U and V sample. 4:1:1 sampling is less common than other formats, and is not discussed in detail in this article.
+
+https://learn.microsoft.com/en-us/windows/win32/medfound/recommended-8-bit-yuv-formats-for-video-rendering
+
+
+
+
+WRITE THIS ROADMAP EXPERT LEVEL EXPLAINED, DEEP WITH SNIPPETS , LEARN FIRST AND IMPLEMENT WITH FILES , FOLDERS, STRUCTURES EVERYTHING USE THE ABOVE COVERSATION, DO NOT LEAVE ANYTHING , I NEED END TO END WHOLE PROJECT IN THIS MARKDOWN FILE PROPERLY, REMOVE UNCESAARY NON SENSES EXTRA THINGS TO SAVE TOKEN CONTEXT SIZE BUT INCLUDE EVERY ESSENTIAL THINGS LIKE HOW YOU GAVE ABOEV IN CONVERSATION ( there's no need to create any file if there's problem just give complete markdown text - i will copy it )
